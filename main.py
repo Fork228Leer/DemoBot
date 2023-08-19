@@ -14,11 +14,29 @@ except FileNotFoundError:
     import sys
     sys.exit(74)
 
+try:
+    ipt = open('DB_mintime.txt', 'r')
+except FileNotFoundError:
+    ipt = open('DB_mintime.txt', 'x')
+    import sys
+    sys.exit(74)
+
 tok = inp.read()
 inp.close()
+if tok == '[Erase all and paste the token here]':
+    import sys
+    sys.exit(74)
+
+mnt = list(ipt)
+mtc = int(mnt[0])
+mtm = mnt[1]
+if (mtc != int) or (mtm != any(('week', 'day', 'hour'))):
+    import sys
+    sys.exit(74)
 
 emo = [':white_check_mark:', ':x:']  # GUI reactions list 1 - agree; 2 - disagree
 idl = []
+mts = int
 
 
 # mfs stole the real goto
@@ -123,7 +141,7 @@ async def newVote(ctx):
                                     trc += 1
 
                     acp = bool
-                    if (vrc.get(emo[0]) >= vrc.get(emo[1])) and (trc >= ctx.guild.member_count):
+                    if (vrc.get(emo[0]) >= vrc.get(emo[1])) and (trc >= (ctx.guild.member_count * 0.5)):
                         if act == 'ban':
                             eta = datetime.datetime.utcnow() + datetime.timedelta(days=ap3)
                             rta = (eta - datetime.datetime.utcnow()).total_seconds()
@@ -177,6 +195,8 @@ async def newVote(ctx):
 
     @bot.event
     async def on_raw_reaction_add(payload):
+        global mtc, mts
+        global mtm
         global idl
         channel = await bot.fetch_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
@@ -184,6 +204,26 @@ async def newVote(ctx):
         member = await guild.fetch_member(payload.user_id)
 
         if payload.member.bot:
+            return
+        if mtm == 'week':
+            mts = mtc * 604800
+        elif mtm == 'day':
+            mts = mtc * 86400
+        elif mtm == 'hour':
+            mts = mtc * 3600
+        mja = payload.member.joined_at()
+        mja.replace('-', ' ')
+        mja.replace(':', ' ')
+        mja.replace('.', ' ')
+        jal = mja.split(sep=' ')
+        # change the 52 to 52.1428571 for better accuracy
+        # change the 4 to 4.3452381 for better accuracy
+        tbn = (datetime.datetime.utcnow() - datetime.timedelta(weeks=((jal[0] * 52) + (jal[1] * 4)),
+                                                               days=jal[2], hours=jal[3],
+                                                               minutes=jal[4], seconds=jal[5])).total_seconds()
+        if tbn < mts:
+            await message.remove_reaction(payload.emoji.name, member)
+            await ctx.send(f'Twink account protection system: minimum time is {mtc} {mtm}')
             return
 
         sbb = False
